@@ -38,8 +38,15 @@ async def boundary(request,call_next):
         try: oversized=int(length)>100000
         except ValueError: oversized=True
         if oversized: return JSONResponse({'detail':'Request too large.'},status_code=413)
-        body=await request.body()
-        if len(body)>100000: return JSONResponse({'detail':'Request too large.'},status_code=413)
+        # Enforce the cap while receiving, including chunked requests without Content-Length.
+        chunks=[]
+        received=0
+        async for chunk in request.stream():
+            received+=len(chunk)
+            if received>100000:
+                return JSONResponse({'detail':'Request too large.'},status_code=413)
+            chunks.append(chunk)
+        request._body=b''.join(chunks)
         if not request.headers.get('authorization') and request.headers.get('x-relay-client')!='dashboard':
             return JSONResponse({'detail':'Dashboard request header required.'},status_code=403)
     response=await call_next(request)
