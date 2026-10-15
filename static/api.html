@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relay — API guide</title><link rel="stylesheet" href="/static/style.css"></head><body><main class="content"><a class="brand" href="/">relay.</a><div class="hero"><div><p class="eyebrow">DEVELOPER GUIDE / V1</p><h1>Any agent.<br><em>One approval boundary.</em></h1><p>Create an API key in Connected agents. Use the key only on your server or in a local agent process.</p></div></div><div class="connection-grid"><section><h2>Submit an action</h2><pre class="code">POST /v1/actions
+Authorization: Bearer YOUR_AGENT_KEY
+Content-Type: application/json
+
+{
+  "title": "Save the reviewed report",
+  "reason": "Report is ready for owner review",
+  "tool": "save_file",
+  "arguments": {
+    "filename": "report.md",
+    "content": "# Report\n\nYour content here."
+  },
+  "idempotency_key": "your-stable-request-id",
+  "expires_in": 3600
+}</pre><p>Use a stable, unique idempotency key (8–100 characters) for each logical action. Identical retries return the original action; changed requests with the same key return 409.</p><h2>Wait for a decision</h2><pre class="code">GET /v1/actions/ACTION_ID
+Authorization: Bearer YOUR_AGENT_KEY</pre><p>Poll every few seconds. A key can only read its own agent's actions. The response includes status, approved arguments and the execution result.</p></section><section><h2>Tool contracts</h2><div class="policy-row"><div>01</div><div><h3>save_file</h3><p>Arguments: filename and content. Only .md, .txt, .csv and .json. Max 50,000 characters. Always requires owner approval.</p></div></div><div class="policy-row"><div>02</div><div><h3>send_webhook</h3><p>Arguments: payload (JSON object). The owner configures the public HTTPS destination in the dashboard. Always requires owner approval. No redirect following or automatic retry.</p></div></div><div class="policy-row"><div>03</div><div><h3>log_event</h3><p>Arguments: message (1–2,000 characters). Records internal metadata immediately; no external tool action.</p></div></div><h2>Lifecycle</h2><pre class="code">pending → approved → running → succeeded
+        ↘ rejected
+        ↘ expired
+        ↘ blocked
+                       ↘ unknown</pre><p>Unknown means an effect may have occurred. Check the destination before creating another request. Revocation stops unclaimed work; it cannot recall an in-flight action.</p><div class="notice">Do not let your agent execute the write independently after approval. Relay's worker executes it. API keys cannot approve actions.</div><a class="btn light" href="/openapi.json">Download OpenAPI schema ↗</a></section></div></main></body></html>
