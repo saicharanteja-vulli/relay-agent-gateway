@@ -14,7 +14,7 @@ cd relay-agent-gateway
 sh start.sh
 ```
 
-Open http://127.0.0.1:8080 and create your workspace. No default password. The launch script creates its own environment on first run; no Orbit installation or model is required. To change the port: `PORT=8090 ./start.sh`.
+Open http://127.0.0.1:8080 and create your workspace. No default password. The launch script creates its own environment on first run; no Orbit installation or model is required. To change the port: `PORT=8090 sh start.sh`.
 
 1. Select **Try a sample request**. It only proposes a sample file; no file is written yet.
 2. Inspect all contents, tick the review acknowledgement, then approve or reject.
@@ -89,3 +89,7 @@ Set `RELAY_DATA` to an absolute directory and `RELAY_COOKIE_NAME` to a distinct 
 ## Orbit integration
 
 Orbit's local operator connector can create a `save_file`-only agent for a matching owner account. Orbit proposals appear as **Orbit · filename** with the originating run ID. Only the signed-in Relay owner can approve them. The proposing agent may download its own successfully delivered file through `GET /v1/actions/{id}/artifact`; other agents, unapproved files, and revoked keys are denied. Orbit verifies the downloaded file against the approved text and never executes a duplicate local write.
+
+### Bounded request streaming
+
+Write requests are limited to 100 KB while receiving the body, including chunked requests without Content-Length. Oversized requests stop with HTTP 413 before the full body is buffered. A regression test covers this boundary.
