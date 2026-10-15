@@ -1,0 +1,49 @@
+{
+  "title": "Relay \u00b7 reject cross-site browser requests",
+  "requirement": "Reject requests marked Sec-Fetch-Site: cross-site before processing any endpoint, while preserving normal setup status, login validation and private-account authentication. This is a proposed defense-in-depth change to a source copy; the live Relay app is unchanged.",
+  "entrypoint": "relay.app:app",
+  "checks": [
+    {
+      "name": "Normal setup status remains available",
+      "method": "GET",
+      "path": "/api/status",
+      "headers": {},
+      "body": null,
+      "expected_status": 200,
+      "expected_json": {
+        "setup_required": true
+      }
+    },
+    {
+      "name": "Cross-site request is rejected",
+      "method": "GET",
+      "path": "/api/status",
+      "headers": {
+        "Sec-Fetch-Site": "cross-site"
+      },
+      "body": null,
+      "expected_status": 403,
+      "expected_json": null
+    },
+    {
+      "name": "Private profile still requires login",
+      "method": "GET",
+      "path": "/api/me",
+      "headers": {},
+      "body": null,
+      "expected_status": 401,
+      "expected_json": null
+    },
+    {
+      "name": "Malformed login stays invalid",
+      "method": "POST",
+      "path": "/api/login",
+      "headers": {
+        "X-Relay-Client": "dashboard"
+      },
+      "body": {},
+      "expected_status": 422,
+      "expected_json": null
+    }
+  ]
+}
