@@ -72,7 +72,7 @@ The dashboard shows the most recent 200 actions and 300 audit events; older reco
 .venv/bin/python -m pytest -q
 ```
 
-27 automated tests pass. The Orbit → Relay → owner approval → exact file delivery workflow was also tested with a real local Ollama task. Webhooks were tested with mocked transport.
+28 automated tests pass. The Orbit → Relay → owner approval → exact file delivery workflow was also tested with a real local Ollama task. Webhooks were tested with mocked transport.
 
 Tests exercise owner/key isolation, unapproved dispatch blocking, rejection, expiry, scoped tools, payload immutability, idempotency conflicts, duplicate decisions, revocation, CSRF, host/origin validation, private-network rejection, webhook configuration changes and recovery without replay. Webhook effects use a mocked transport in tests; no external automation is sent as part of setup.
 
