@@ -1,0 +1,37 @@
+name: Proof verification
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: proof-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: Proof / required
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      REPOSITORY: ${{ github.repository }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Fetch immutable snapshots without executing PR source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]
+          [[ "$BASE_SHA" =~ ^[a-f0-9]{40}$ && "$HEAD_SHA" =~ ^[a-f0-9]{40}$ ]]
+          git init trusted
+          git -C trusted remote add origin "https://github.com/$REPOSITORY.git"
+          git -C trusted fetch --depth=1 origin "$BASE_SHA" "$HEAD_SHA"
+          git -C trusted checkout --detach "$BASE_SHA"
+      - name: Install the trusted verifier
+        working-directory: trusted
+        run: |
+          python3 -m venv /tmp/proof-env
+          /tmp/proof-env/bin/pip install pydantic==2.14.1
+      - name: Run the reviewed base-branch policy against both commits
+        working-directory: trusted
+        run: /tmp/proof-env/bin/python .proof/verify_pr.py
