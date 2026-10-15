@@ -27,7 +27,7 @@ app=FastAPI(title='Relay — Agent Approval Gateway',version='1.0.0',lifespan=li
 
 @app.middleware('http')
 async def boundary(request,call_next):
-    if request.headers.get('sec-fetch-site') == 'same-site':
+    if request.headers.get('sec-fetch-site') == 'cross-site':
         return JSONResponse({'detail':'Cross-site browser request blocked.'},status_code=403)
     host=request.url.hostname
     if host not in ('localhost','127.0.0.1','testserver'):
